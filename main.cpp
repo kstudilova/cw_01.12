@@ -37,6 +37,8 @@ namespace top {
 
     size_t points(const IDraw& d, p_t** pts, size_t s);
 
+    frame_t frame(const p_t* pts, size_t s);
+
     frame_t build_frame(const p_t  * ps, size_t s);
 
     char * build_canvas(frame_t f);
@@ -80,6 +82,23 @@ size_t top::points(const IDraw& d, p_t** pts, size_t s) {
         ++delta;
     }
     return delta;
+}
+
+top::frame_t top::frame(const p_t* pts, size_t s) {
+    if (!s) {
+        throw std::logic_error("bad size");
+    }
+    int minx = pts[0].x , maxx = minx;
+    int miny = pts[0].x , maxy = miny;
+    for (size_t i = 0; i < s; ++i) {
+        minx = std::min(minx, pts[i].x);
+        maxx = std::max(maxx, pts[i].x);
+        miny = std::min(miny, pts[i].y);
+        maxy = std::max(maxy, pts[i].y);
+    }
+    p_t aa{minx, miny};
+    p_t bb{maxx, maxy};
+    return {aa, bb};
 }
 
 int main(){
