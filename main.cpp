@@ -24,16 +24,28 @@ namespace top {
         p_t bb; //right_top
     };
 
-    struct VSeg {
-        int x;
-        int down_y;
-        int up_y;
+    struct VSeg : IDraw {
+        p_t begin() const override;
+        p_t next(p_t) const override;
+        p_t beg;
+        int length;
+        VSeg(p_t, int);
     };
 
-    struct HSeg {
-        int y;
-        int left_x;
-        int right_x;
+    struct HSeg : IDraw {
+        p_t begin() const override;
+        p_t next(p_t) const override;
+        p_t beg;
+        int length;
+        HSeg(p_t, int);
+    };
+
+    struct DSeg : IDraw {
+        p_t begin() const override;
+        p_t next(p_t) const override;
+        p_t beg;
+        int length;
+        DSeg(p_t, int);
     };
 
     bool operator==(p_t a, p_t b){
@@ -80,10 +92,55 @@ top::p_t top::Dot::next(p_t) const {
     return begin();
 }
 
+top::HSeg::HSeg(p_t a, int b) :
+    beg(a), length(b)
+    {}
+
+top::p_t top::HSeg::begin() const {
+    return beg;
+}
+
+top::p_t top::HSeg::next(p_t a) const {
+    if (a.x - beg.x + 1 > length + 1) {
+        return begin();
+    }
+    return {a.x + 1, a.y};
+}
+
+top::VSeg::VSeg(p_t a, int b) :
+    beg(a), length(b)
+    {}
+
+top::p_t top::VSeg::begin() const {
+    return beg;
+}
+
+top::p_t top::VSeg::next(p_t a) const {
+    if (a.y - beg.y + 1 > length + 1) {
+        return begin();
+    }
+    return {a.x, a.y + 1};
+}
+
+top::DSeg::DSeg(p_t a, int b) :
+    beg(a), length(b)
+    {}
+
+top::p_t top::DSeg::begin() const {
+    return beg;
+}
+
+top::p_t top::DSeg::next(p_t a) const {
+    if (a.x - beg.x + 1 > length + 1) {
+        return begin();
+    }
+    return {a.x + 1, a.y + 1};
+}
+
 void top::make_f(IDraw** b, size_t k) {
-    b[0] = new Dot(0,0);
-    b[1] = new Dot(-1, -5);
-    b[2] = new Dot(7, 7);
+    b[0] = new HSeg({1,0}, 5);
+    b[1] = new VSeg({-1, -5}, 3);
+    b[2] = new DSeg({2, 2}, 4);
 }
 
 void top::extend(p_t** pts, size_t s, p_t p) {
@@ -173,9 +230,9 @@ int main(){
             get_points(*(f[i]), &p, s);
         }
         frame_t fr = build_frame(p, s);
-        cnv = build_canvas(fr, '*');
+        cnv = build_canvas(fr, '.');
         for (size_t i = 0; i < s; ++i) {
-            paint_canvas(cnv, fr, p[i], '.');
+            paint_canvas(cnv, fr, p[i], '0');
         }
         print_canvas(std::cout, cnv, fr);
     } catch(...){
