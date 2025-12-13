@@ -48,6 +48,23 @@ namespace top {
         DSeg(p_t, int);
     };
 
+    struct Square : IDraw {
+        p_t begin() const override;
+        p_t next(p_t a) const override;
+        p_t top_left;
+        int size;
+        Square(p_t tl, int s);
+    };
+
+    struct Rectangle : IDraw {
+        p_t begin() const override;
+        p_t next(p_t a) const override;
+        p_t top_left;
+        int width;
+        int height;
+        Rectangle(p_t tl, int w, int h);
+    };
+
     bool operator==(p_t a, p_t b){
         return a.x == b.x && a.y == b.y;
     }
@@ -74,73 +91,14 @@ namespace top {
     void extend (p_t** pts, size_t s, p_t p);
 }
 
-top::Dot::Dot(int x, int y) :
-    IDraw(),
-    o{x, y}
-{}
-
-top::Dot::Dot(p_t dd) :
-    IDraw(),
-    o{dd}
-{}
-
-top::p_t top::Dot::begin() const {
-    return o;
-}
-
-top::p_t top::Dot::next(p_t) const {
-    return begin();
-}
-
-top::HSeg::HSeg(p_t a, int b) :
-    beg(a), length(b)
-    {}
-
-top::p_t top::HSeg::begin() const {
-    return beg;
-}
-
-top::p_t top::HSeg::next(p_t a) const {
-    if (a.x - beg.x + 1 > length + 1) {
-        return begin();
-    }
-    return {a.x + 1, a.y};
-}
-
-top::VSeg::VSeg(p_t a, int b) :
-    beg(a), length(b)
-    {}
-
-top::p_t top::VSeg::begin() const {
-    return beg;
-}
-
-top::p_t top::VSeg::next(p_t a) const {
-    if (a.y - beg.y + 1 > length + 1) {
-        return begin();
-    }
-    return {a.x, a.y + 1};
-}
-
-top::DSeg::DSeg(p_t a, int b) :
-    beg(a), length(b)
-    {}
-
-top::p_t top::DSeg::begin() const {
-    return beg;
-}
-
-top::p_t top::DSeg::next(p_t a) const {
-    if (a.x - beg.x + 1 > length + 1) {
-        return begin();
-    }
-    return {a.x + 1, a.y + 1};
-}
-
 void top::make_f(IDraw** b, size_t k) {
-    b[0] = new HSeg({1,0}, 5);
-    b[1] = new VSeg({-1, -5}, 3);
-    b[2] = new DSeg({2, 2}, 4);
+    b[0] = new Dot(-10, 8);
+    b[1] = new Dot(10, -8);
+    b[2] = new HSeg({1,0}, 5);
+    b[3] = new VSeg({-1, -5}, 3);
+    b[4] = new DSeg({2, 2}, 4);
+    b[5] = new Square({-8, 5}, 4);
+    b[6] = new Rectangle({4, -7}, 4, 6);
 }
 
 void top::extend(p_t** pts, size_t s, p_t p) {
@@ -152,7 +110,6 @@ void top::extend(p_t** pts, size_t s, p_t p) {
     delete [] *pts;
     *pts = res;
 }
-
 
 size_t top::get_points(const IDraw& d, p_t** pts, size_t& s) {
     p_t p = d.begin();
@@ -217,16 +174,158 @@ void top::print_canvas(std::ostream& os, const char* cnv, frame_t fr) {
     }
 }
 
+top::Dot::Dot(int x, int y) :
+    IDraw(),
+    o{x, y}
+{}
+
+top::Dot::Dot(p_t dd) :
+    IDraw(),
+    o{dd}
+{}
+
+top::p_t top::Dot::begin() const {
+    return o;
+}
+
+top::p_t top::Dot::next(p_t) const {
+    return begin();
+}
+
+top::HSeg::HSeg(p_t a, int b) :
+    beg(a), length(b)
+    {}
+
+top::p_t top::HSeg::begin() const {
+    return beg;
+}
+
+top::p_t top::HSeg::next(p_t a) const {
+    if (a.x - beg.x + 1 > length - 1) {
+        return begin();
+    }
+    return {a.x + 1, a.y};
+}
+
+top::VSeg::VSeg(p_t a, int b) :
+    beg(a), length(b)
+    {}
+
+top::p_t top::VSeg::begin() const {
+    return beg;
+}
+
+top::p_t top::VSeg::next(p_t a) const {
+    if (a.y - beg.y + 1 > length - 1) {
+        return begin();
+    }
+    return {a.x, a.y + 1};
+}
+
+top::DSeg::DSeg(p_t a, int b) :
+    beg(a), length(b)
+    {}
+
+top::p_t top::DSeg::begin() const {
+    return beg;
+}
+
+top::p_t top::DSeg::next(p_t a) const {
+    if (a.x - beg.x + 1 > length - 1) {
+        return begin();
+    }
+    return {a.x + 1, a.y + 1};
+}
+
+top::Square::Square(p_t tl, int s) :
+    top_left(tl), size(s)
+    {}
+
+top::p_t top::Square::begin() const {
+    return top_left;
+}
+
+top::p_t top::Square::next(p_t a) const {
+    if (a.x == top_left.x && a.y == top_left.y) { //левый верхний угол
+        return {top_left.x + 1, top_left.y};
+    }
+    else if (a.y == top_left.y && a.x < top_left.x + size - 1) { //на верхней стороне
+        return {a.x + 1, a.y};
+    }
+    else if (a.x == top_left.x + size - 1 && a.y == top_left.y) { //правый верний угол
+        return {a.x, a.y - 1};
+    }
+    else if (a.x == top_left.x + size - 1 && a.y > top_left.y - size + 1) { //правая сторона
+        return {a.x, a.y - 1};
+    }
+    else if (a.x == top_left.x + size - 1 && a.y == top_left.y - size + 1) { // правый нижний угол
+        return {a.x - 1, a.y};
+    }
+    else if (a.x > top_left.x && a.y == top_left.y - size + 1) { // нижняя сторона
+        return {a.x - 1, a.y};
+    }
+    else if (a.x == top_left.x && a.y == top_left.y - size + 1) { // левый нижний угол
+        return {a.x, a.y + 1};
+    }
+    else if (a.x == top_left.x && a.y < top_left.y) { // левая сторона
+        if (a.y < top_left.y - 1) {
+            return {a.x, a.y + 1};
+        } else {
+            return begin ();
+        }
+    }
+    return begin();
+}
+
+top::Rectangle::Rectangle(p_t tl, int w, int h) :
+    top_left(tl), width(w), height(h)
+    {}
+
+top::p_t top::Rectangle::begin() const {
+    return top_left;
+}
+
+top::p_t top::Rectangle::next(p_t a) const {
+    if (a.x == top_left.x && a.y == top_left.y) {
+        return {top_left.x + 1, top_left.y};
+    }
+    else if (a.y == top_left.y && a.x >= top_left.x + 1 && a.x < top_left.x + width - 1) {
+        return {a.x + 1, a.y};
+    }
+    else if (a.x == top_left.x + width - 1 && a.y == top_left.y) {
+        return {a.x, a.y - 1};
+    }
+    else if (a.x == top_left.x + width - 1 && a.y <= top_left.y - 1 && a.y > top_left.y - height + 1) {
+        return {a.x, a.y - 1};
+    }
+    else if (a.x == top_left.x + width - 1 && a.y == top_left.y - height + 1) {
+        return {a.x - 1, a.y};
+    }
+    else if (a.y == top_left.y - height + 1 && a.x <= top_left.x + width - 2 && a.x > top_left.x) {
+        return {a.x - 1, a.y};
+    }
+    else if (a.x == top_left.x && a.y == top_left.y - height + 1) {
+        return {a.x, a.y + 1};
+    }
+    else if (a.x == top_left.x && a.y >= top_left.y - height + 2 && a.y < top_left.y) {
+        return {a.x, a.y + 1};
+    }
+    else if (a.x == top_left.x && a.y == top_left.y - 1) {
+        return begin();
+    }
+    return begin();
+}
+
 int main(){
     using namespace top;
-    IDraw * f[3] = {};
+    IDraw * f[7] = {};
     p_t * p = nullptr;
     size_t s = 0;
     char * cnv = nullptr;
     int err = 0;
     try {
-        make_f(f, 3);
-        for (size_t i = 0; i < 3; ++i){
+        make_f(f, 7);
+        for (size_t i = 0; i < 7; ++i){
             get_points(*(f[i]), &p, s);
         }
         frame_t fr = build_frame(p, s);
@@ -238,9 +337,9 @@ int main(){
     } catch(...){
         err = 1;
     }
-    delete f[0];
-    delete f[1];
-    delete f[2];
+    for (int i = 0; i < 7; ++i) {
+        delete f[i];
+    }
     delete[] p;
     delete[] cnv;
     return err;
